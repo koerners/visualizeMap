@@ -1,19 +1,21 @@
-
 let data = [];
 
 function preload() {
     crawlerData = loadTable('test.csv');
 }
-function setup() {
 
+function setup() {
     processData();
+    noLoop();
+
 }
 
 
 function draw() {
     clear();
     for (let country of data) {
-        L.marker([country.lat, country.lon]).addTo(mymap);
+        var latlng = L.latLng(country.lat, country.lon);
+        L.marker(latlng).addTo(mymap);
     }
 }
 
@@ -26,7 +28,15 @@ function request(city) {
             url: Url,
             type: "GET",
             success: function (result) {
-                console.log(result[0])
+                lat = result[0].lat;
+                lon = result[0].lon;
+
+                data.push({
+                    lat,
+                    lon
+                });
+                redraw();
+
             },
             error: function (error) {
                 console.log("Error");
@@ -36,31 +46,14 @@ function request(city) {
 }
 
 
-
-
-
 function processData() {
-    console.log("Process");
-
-    //request('munich');
-
-
+    request('munich');
 
     for (let row of crawlerData.rows) {
         let city = row.arr[0];
+        //request(city);
 
     }
-
-
-    lat = 45.77;
-    lon = 4.85;
-
-    data.push({
-        lat,
-        lon
-    });
-
-
 
 }
 
