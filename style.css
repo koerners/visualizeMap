@@ -2,7 +2,11 @@
   margin: 10px;
 }
 
+#mapid { height: 1000px; }
+
+
 body {
   display: flex;
   justify-content: center;
 }
+
