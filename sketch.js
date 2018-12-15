@@ -63,6 +63,7 @@ function request(city) {
 }
 
 
+
 function processData() {
     // request('munich');
 
