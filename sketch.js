@@ -1,128 +1,77 @@
-// Daniel Shiffman
-// http://codingtra.in
-// http://patreon.com/codingtrain
-
-// Subscriber Mapping Visualization
-// https://youtu.be/Ae73YY_GAU8
-
-let youtubeData;
-let countries;
-
-const mappa = new Mappa('Leaflet');
-let trainMap;
-let canvas;
-let dataSource;
-
-var bubbles = []; // Global array to hold all bubble objects
-
-
 let data = [];
 
-let currentColor;
-
-const options = {
-  lat: 0,
-  lng: 0,
-  zoom: 1.5,
-  style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
-}
-
 function preload() {
-  // youtubeData = loadTable('subscribers_geo.csv', 'header');
-  youtubeData = loadTable('watch_time_geo.csv', 'header');
-  countries = loadJSON('countries.json');
-  cities = loadJSON('cities.json');
-  crawlerData = loadTable('test.csv');
+    crawlerData = loadTable('test.csv');
 }
 
 function setup() {
-  canvas = createCanvas(800, 600);
-  trainMap = mappa.tileMap(options);
-  trainMap.overlay(canvas);
 
-  dataSource = select('#dataSource'); // get the DOM element from the HTML
-  dataSource.changed(processData); // assign callback
 
-  currentColor = color(255, 0, 200, 100); // default color 
-  processData();
+    var canvas = createCanvas(50, 20);
+    canvas.parent('sketch-holder');
+    noLoop();
+
+
+
+    button = createButton('process');
+    button.position(8, 5);
+    button.mousePressed(processData);
+
+    button1 = createButton('reload');
+    button1.position(100, 5);
+    button1.mousePressed(reloadPage);
+
+
+}
+
+function reloadPage() {
+    document.location.reload(true);
 }
 
 function draw() {
-  clear();
-  for (let country of data) {
-    const pix = trainMap.latLngToPixel(country.lat, country.lon);
-    fill(currentColor);
-    const zoom = trainMap.zoom();
-    const scl = pow(2, zoom); // * sin(frameCount * 0.1);
-    ellipse(pix.x, pix.y, country.diameter * scl);
-  }
+    clear();
+    for (let country of data) {
+        var latlng = L.latLng(country.lat, country.lon);
+        L.marker(latlng, title='test').addTo(mymap);
+    }
 }
+
+
+function request(city) {
+
+    $(document).ready(function () {
+        const Url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + city;
+        $.ajax({
+            url: Url,
+            type: "GET",
+            success: function (result) {
+                lat = result[0].lat;
+                lon = result[0].lon;
+
+                data.push({
+                    lat,
+                    lon
+                });
+                redraw();
+
+            },
+            error: function (error) {
+                console.log("Error");
+            }
+        })
+    })
+}
+
 
 function processData() {
-  data = []; // always clear the array when picking a new type
+    // request('munich');
 
-  let type = dataSource.value(); 
-  switch (type) {
-    case 'subscribers':
-      currentColor = color(64, 250, 200, 100);
-      break;
-    case 'views':
-      currentColor = color(255, 0, 200, 100);
-      break;
-    case 'watch_time_minutes':
-      currentColor = color(200, 0, 100, 100);
-      break;
-  }
+    for (let row of crawlerData.rows) {
+        let city = row.arr[0];
 
-  let maxValue = 0; // changed to something more generic, as we no longer only work with subs
-  let minValue = Infinity;
+        request(city);
 
-  var bubbleData = cities['bubbles'];
-  for (var i = 0; i < bubbleData.length; i++) {
-    // Get each object in the array
-    var bubble = bubbleData[i];
-    // Get a position object
-    var position = bubble['name'];
-    // Get x,y from position
-    var x = position['let'];
-    var y = position['lan'];
-
-    // Put object in array
-    bubbles.push(new Bubble(position,x, y));
-  }
-  for (let row of crawlerData.rows) {
-    let city = row.arr[0];
-    
-    let latlon = cities['name'][city];
-    console.log(latlon);
-
-  }
-
-  for (let row of youtubeData.rows) {
-    let country = row.get('country_id').toLowerCase();
-    let latlon = countries[country];
-    if (latlon) {
-      let lat = latlon[0];
-      let lon = latlon[1];
-      let count = Number(row.get(type));
-      data.push({
-        lat,
-        lon,
-        count
-      });
-      if (count > maxValue) {
-        maxValue = count;
-      }
-      if (count < minValue) {
-        minValue = count;
-      }
     }
-  }
 
-  let minD = sqrt(minValue);
-  let maxD = sqrt(maxValue);
-
-  for (let country of data) {
-    country.diameter = map(sqrt(country.count), minD, maxD, 1, 20);
-  }
 }
+
