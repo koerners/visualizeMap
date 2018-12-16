@@ -1,4 +1,4 @@
-#List of cities / locations to markers on map
+# List of cities / locations to markers on map
 
 Reads city names from a text file (line per line) and puts makers on the map.
 
